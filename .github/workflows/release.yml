@@ -7,6 +7,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -16,6 +17,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need full history/tags, not just the latest commit
+
+      - name: Resolve tag to build
+        id: tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG=$(git describe --tags --abbrev=0)
+          else
+            TAG=${GITHUB_REF#refs/tags/}
+          fi
+          echo "Building tag: $TAG"
+          echo "name=$TAG" >> "$GITHUB_OUTPUT"
+          git checkout "$TAG"
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -28,6 +44,7 @@ jobs:
       - name: Create Release and Upload Asset
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.tag.outputs.name }}
           files: target/release/*.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
