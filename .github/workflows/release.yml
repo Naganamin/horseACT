@@ -18,7 +18,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # need full history/tags, not just the latest commit
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Resolve tag to build
         id: tag
